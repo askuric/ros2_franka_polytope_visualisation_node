@@ -53,4 +53,5 @@ Click on the "Add" button in RViz, select "By topic", and choose the `/polytope_
 <img src="docs/image-3.png" alt="RViz Visualization" height="400"/><img src="docs/image-1.png" alt="RViz Visualization" height="400"/>
 
 You should be able to see the velocity capacity polytope visualized around the end-effector of the Franka robot in RViz. Now you can interactively change the joint states of the robot using the GUI, and observe how the polytope changes accordingly.
+
 <img src="docs/image-4.png" alt="RViz Visualization" width="350"/><img src="docs/image-2.png" alt="RViz Visualization" width="350"/>
