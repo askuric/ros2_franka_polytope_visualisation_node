@@ -50,6 +50,7 @@ ros2 run pycap_franka franka_capacity
 6. **Visualize in RViz**: Open RViz and add the "Marker" to see the velocity capacity polytope around the end-effector of the Franka robot.
 
 Click on the "Add" button in RViz, select "By topic", and choose the `/polytope_marker` topic to visualize the polytope.
+
 <img src="docs/image-3.png" alt="RViz Visualization" height="400"/><img src="docs/image-1.png" alt="RViz Visualization" height="400"/>
 
 You should be able to see the velocity capacity polytope visualized around the end-effector of the Franka robot in RViz. Now you can interactively change the joint states of the robot using the GUI, and observe how the polytope changes accordingly.
