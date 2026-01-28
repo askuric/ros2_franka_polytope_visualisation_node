@@ -5,6 +5,7 @@ from sensor_msgs.msg import JointState
 import pinocchio as pin
 from rcl_interfaces.srv import GetParameters
 from pycapacity.robot import *
+from pycapacity.algorithms import *
 import time
 from visualization_msgs.msg import Marker
 from . import polytope_visualisation_utils as pvu
@@ -16,6 +17,9 @@ class VelPolytopeNode(Node):
         
         # initial joint positions
         self.joint_positions = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+
+        # frame name (configurable)
+        self.frame_name = self.declare_parameter('frame_name', 'fr3_link8').value
         
         
         self.cli = self.create_client(GetParameters, '/robot_state_publisher/get_parameters')
@@ -27,7 +31,8 @@ class VelPolytopeNode(Node):
         future = self.cli.call_async(req)
         future.add_done_callback(self._on_robot_description)
         
-        self.marker_pub = self.create_publisher(Marker, '/polytope_marker', 1)
+        self.marker_pub_faces = self.create_publisher(Marker, '/polytope_marker_faces_'+self.frame_name, 1)
+        self.marker_pub_edges = self.create_publisher(Marker, '/polytope_marker_edges_'+self.frame_name, 1)
         
         # joint state subscriber
         self.subscription = self.create_subscription(
@@ -50,7 +55,7 @@ class VelPolytopeNode(Node):
         self.get_logger().info('Robot model loaded from URDF')
         
         # end-effector frame id
-        self.ee_frame_id = self.robot.model.getFrameId("fr3_link8")
+        self.ee_frame_id = self.robot.model.getFrameId(self.frame_name)
         
     # function receiving the new joint positions
     def callback(self, data):
@@ -61,7 +66,7 @@ class VelPolytopeNode(Node):
         if not hasattr(self, 'robot'):
             return
         if np.sum(self.joint_positions):
-            self.plot_polytope(self.robot, self.joint_positions, frame_name="fr3_link8", scaling_factor=10)
+            self.plot_polytope(self.robot, self.joint_positions, frame_name=self.frame_name, scaling_factor=10)
 
 
     def plot_polytope(self, robot, q, frame_name = None, scaling_factor = 10):
@@ -90,7 +95,7 @@ class VelPolytopeNode(Node):
 
         # calculate force vertexes
         start = time.time()
-        poly = velocity_polytope(J, dq_max, dq_min)
+        poly = velocity_polytope(J, dq_max, dq_min, options={'method':'vrep'})
         poly.find_faces()
         velocity_vertex, velocity_faces = poly.vertices/scaling_factor, poly.face_indices
         
@@ -99,10 +104,10 @@ class VelPolytopeNode(Node):
         
         # Publish polytope as marker
         faces_msg = pvu.create_polytope_triangles_msg(velocity_vertex, velocity_faces, ee_position, self.get_clock().now().to_msg())
-        self.marker_pub.publish(faces_msg)
+        self.marker_pub_faces.publish(faces_msg)
         # comment out for faster plotting
         edges_msg = pvu.create_polytope_edges_msg(velocity_vertex, velocity_faces, ee_position, self.get_clock().now().to_msg())
-        self.marker_pub.publish(edges_msg)
+        self.marker_pub_edges.publish(edges_msg)
         
     
 # main function
